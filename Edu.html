@@ -1,0 +1,24 @@
+import json
+import google.generativeai as genai
+
+genai.configure(api_key="YOUR_API_KEY")
+
+def clean_json_block(text):
+    # Remove markdown ```json fences
+    return re.sub(r"```(?:json)?\n(.*?)```", r"\1", text, flags=re.DOTALL).strip()
+
+def generate_quiz(text: str) -> list:
+    try:
+        model = genai.GenerativeModel(model_name="models/gemini-1.5-pro")
+        prompt = f"""Based on the following text, generate 3 multiple choice questions (MCQs).
+Return the result strictly as a valid JSON list of dictionaries with keys: "question", "options" (a list of 4 choices), and "answer".
+
+Text:
+{text}
+"""
+        response = model.generate_content(prompt)
+        cleaned_text = clean_json_block(response.text)
+        return json.loads(cleaned_text)
+    except Exception as e:
+        print(f"Error generating quiz: {e}")
+        return []
